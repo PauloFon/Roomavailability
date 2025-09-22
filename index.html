@@ -36,20 +36,12 @@
         #filterBtn:hover, #resetBtn:hover {
             background-color: #c9181e;
         }
-        #enBtn, #ptBtn {
-            /* Styles for language buttons will be handled by JS */
-        }
-        #maxPrice {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
         #maxPrice:focus {
             outline: none;
-            ring: 2px;
-            ring-color: #3b82f6;
+            --tw-ring-color: #3b82f6;
+            --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+            --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+            box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
             border-color: #3b82f6;
         }
     </style>
@@ -57,9 +49,9 @@
 <body class="bg-gray-100">
     <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <img src="https://quartoequartos.com/wp-content/uploads/2021/03/logo-sm.jpg" alt="Logo" class="h-20 w-30 rounded-md shadow" />
-            <h1 id="mainTitle" class="text-2xl sm:text-3xl font-bold text-gray-800">Room Availability Filter</h1>
-            <div class="lang-toggle mt-3 sm:mt-0">
+            <img src="https://quartoequartos.com/wp-content/uploads/2021/03/logo-sm.jpg" alt="Logo" class="h-20 w-auto rounded-md shadow" />
+            <h1 id="mainTitle" class="text-2xl sm:text-3xl font-bold text-gray-800 mt-4 sm:mt-0">Room Availability Filter</h1>
+            <div class="lang-toggle mt-4 sm:mt-0">
                 <button id="enBtn" onclick="toggleLanguage('en')" class="px-3 py-1 text-sm font-medium rounded-md"></button>
                 <button id="ptBtn" onclick="toggleLanguage('pt')" class="px-3 py-1 text-sm font-medium rounded-md"></button>
             </div>
@@ -67,7 +59,7 @@
         <div class="filter bg-white p-4 rounded-lg shadow-md mb-6">
             <div id="filterLabels" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
                 <div class="flex flex-col">
-                    <label id="monthLabel" for="month" class="text-sm font-medium text-gray-600 mb-1">Select Month:</label>
+                    <label id="monthLabel" for="month" class="text-sm font-medium text-gray-600 mb-1">Show Availabilities From:</label>
                     <select id="month" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </select>
                 </div>
@@ -88,11 +80,11 @@
                 </div>
                 <div class="flex flex-col">
                     <label id="priceLabel" for="maxPrice" class="text-sm font-medium text-gray-600 mb-1">Max Price (€):</label>
-                    <input type="number" id="maxPrice" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" min="0" step="1" value="1000">
+                    <input type="number" id="maxPrice" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" min="0" step="10" value="1000">
                 </div>
-                <div class="flex flex-col sm:flex-row gap-2 lg:col-span-1 justify-end">
-                    <button id="filterBtn" onclick="filterData()" class="w-full sm:w-auto bg-[#ed2025] text-white font-semibold py-2 px-4 rounded-md hover:bg-[#c9181e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ed2025]">Filter</button>
-                    <button id="resetBtn" onclick="resetFilters()" class="w-full sm:w-auto bg-[#ed2025] text-white font-semibold py-2 px-4 rounded-md hover:bg-[#c9181e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ed2025]">Reset</button>
+                <div class="flex flex-col sm:flex-row gap-2 lg:col-span-1 justify-end mt-4 lg:mt-0">
+                    <button id="filterBtn" onclick="filterData()" class="w-full sm:w-auto font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2">Filter</button>
+                    <button id="resetBtn" onclick="resetFilters()" class="w-full sm:w-auto font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2">Reset</button>
                 </div>
             </div>
         </div>
@@ -104,19 +96,34 @@
         </div>
     </div>
 
+    <!-- Gemini Modal -->
+    <div id="geminiModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800"></h3>
+                <button onclick="hideModal()" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="modalContent" class="p-6 overflow-y-auto">
+                <!-- Content will be injected here -->
+            </div>
+            <div class="p-4 border-t flex justify-end bg-gray-50 rounded-b-lg">
+                <button onclick="hideModal()" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allData = [];
         let filteredData = [];
         let lang = 'en';
         let maxPriceDefault = 1000;
 
-        // --- THIS IS THE CORRECTED LINE ---
-        const monthsInOrder = ["JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO", "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO"];
+        const academicMonths = ["SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO", "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO"];
 
         const labels = {
             en: {
                 mainTitle: "Room Availability",
-                monthLabel: "Select Month:",
+                monthLabel: "Show Availabilities From:",
                 balconyLabel: "Balcony:",
                 windowLabel: "Window:",
                 privatewcLabel: "Private WC:",
@@ -133,18 +140,20 @@
                 privatewc: "Private WC",
                 monthlyStatus: "Price / Month",
                 loading: "Connecting with database...",
-                noData: "Sorry! No Rooms Available.",
-                resultsFound: "Showing {count} matching rooms",
+                noData: "Sorry! No rooms match your criteria.",
+                resultsFound: "Showing {count} total monthly availabilities",
                 error: "Error loading data",
                 viewPhoto: "View Photo",
                 any: "Any",
                 yes: "Yes",
                 no: "No",
-                months: { "JULHO": "July", "AGOSTO": "August", "SETEMBRO": "September", "OUTUBRO": "October", "NOVEMBRO": "November", "DEZEMBRO": "December", "JANEIRO": "January", "FEVEREIRO": "February", "MARÇO": "March", "ABRIL": "April", "MAIO": "May", "JUNHO": "June" }
+                months: { "SETEMBRO": "September", "OUTUBRO": "October", "NOVEMBRO": "November", "DEZEMBRO": "December", "JANEIRO": "January", "FEVEREIRO": "February", "MARÇO": "March", "ABRIL": "April", "MAIO": "May", "JUNHO": "June", "JULHO": "July" },
+                availabilityLabel: "Available in",
+                fullAvailabilityLabel: "Full Availability"
             },
             pt: {
                 mainTitle: "Disponibilidade de Quartos",
-                monthLabel: "Selecione Mês:",
+                monthLabel: "Mostrar Disponibilidades De:",
                 balconyLabel: "Varanda:",
                 windowLabel: "Janela:",
                 privatewcLabel: "WC Privado:",
@@ -162,13 +171,15 @@
                 monthlyStatus: "Preço / Mês",
                 loading: "Carregando dados da Folha Google...",
                 noData: "Nenhum quarto corresponde aos seus critérios.",
-                resultsFound: "Mostrando {count} quartos correspondentes",
+                resultsFound: "Mostrando {count} disponibilidades mensais totais",
                 error: "Erro ao carregar dados",
                 viewPhoto: "Ver Foto",
                 any: "Qualquer",
                 yes: "Sim",
                 no: "Não",
-                months: { "JULHO": "Julho", "AGOSTO": "Agosto", "SETEMBRO": "Setembro", "OUTUBRO": "Outubro", "NOVEMBRO": "Novembro", "DEZEMBRO": "Dezembro", "JANEIRO": "Janeiro", "FEVEREIRO": "Fevereiro", "MARÇO": "Março", "ABRIL": "Abril", "MAIO": "Maio", "JUNHO": "Junho" }
+                months: { "SETEMBRO": "Setembro", "OUTUBRO": "Outubro", "NOVEMBRO": "Novembro", "DEZEMBRO": "Dezembro", "JANEIRO": "Janeiro", "FEVEREIRO": "Fevereiro", "MARÇO": "Março", "ABRIL": "Abril", "MAIO": "Maio", "JUNHO": "Junho", "JULHO": "Julho" },
+                availabilityLabel: "Disponível em",
+                fullAvailabilityLabel: "Disponibilidade Total"
             }
         };
 
@@ -178,30 +189,35 @@
             const isAvailableStringNumber = typeof monthValue === 'string' && !isNaN(parseFloat(monthValue)) && parseFloat(monthValue) > 0;
             return isAvailableString || isAvailableNumber || isAvailableStringNumber;
         }
+        
+        function getAvailabilityRange(availability, lang) {
+            let startMonth = null;
+            let endMonth = null;
 
-        function computeStartMonth(availability) {
-            for (let i = 0; i < monthsInOrder.length; i++) {
-                let isGood = true;
-                for (let j = i; j < monthsInOrder.length; j++) {
-                    const m = monthsInOrder[j];
-                    if (!isAvailable(availability[m])) {
-                        isGood = false;
-                        break;
+            for (const month of academicMonths) {
+                if (isAvailable(availability[month])) {
+                    if (startMonth === null) {
+                        startMonth = month;
+                    }
+                    endMonth = month;
+                } else {
+                    if (startMonth !== null) {
+                        break; 
                     }
                 }
-                if (isGood) {
-                    return monthsInOrder[i];
-                }
             }
-            return null;
+
+            if (startMonth && endMonth) {
+                const start = labels[lang].months[startMonth] || startMonth;
+                const end = labels[lang].months[endMonth] || endMonth;
+                return start === end ? start : `${start} - ${end}`;
+            }
+            return 'N/A';
         }
+
 
         async function fetchData() {
             const url = 'https://script.google.com/macros/s/AKfycbwL2gJ0mzG7ch6SQzkwZUQ6chQb4kDQEupUEZR2L7iqQozrEkLEclEewqBXC-b25Yai_g/exec';
-            if (!url.startsWith('https://script.google.com')) {
-                showMessage('Error: Please paste your valid Google Apps Script URL into the `fetchData` function in the script.', 'error');
-                return;
-            }
             showMessage(labels[lang].loading, 'loading');
             try {
                 const response = await fetch(url);
@@ -212,36 +228,30 @@
                 if (result.error) {
                     throw new Error(`Google Script Error: ${result.error}. Details: ${result.details || ''}`);
                 }
-                // Validate and clean data
                 allData = result.map(item => {
-                    // Trim spaces from keys in availability object
                     const cleanedAvailability = {};
                     if (item.availability) {
                         for (const key in item.availability) {
-                            cleanedAvailability[key.trim()] = item.availability[key];
+                            cleanedAvailability[key.trim().toUpperCase()] = item.availability[key];
                         }
                     }
-
-                    const cleanedItem = {
+                    return {
                         ...item,
                         availability: cleanedAvailability,
-                        privatewc: item.privatewc ?? 'NÃO',
-                        balcony: item.balcony ?? 'NÃO',
-                        window: item.window ?? 'NÃO',
+                        privatewc: item.privatewc ? item.privatewc.toUpperCase() : 'NÃO',
+                        balcony: item.balcony ? item.balcony.toUpperCase() : 'NÃO',
+                        window: item.window ? item.window.toUpperCase() : 'NÃO',
                         price: item.price ?? null
                     };
-                    cleanedItem.startMonth = computeStartMonth(cleanedItem.availability || {});
-                    return cleanedItem;
                 });
-
                 filteredData = [...allData];
                 updatePriceRange();
                 hideMessage();
                 displayData(filteredData);
             } catch (error) {
                 console.error('Fetch Error:', error);
-                showMessage(`${labels[lang].error}: ${error.message}. Please check the console (F12) for more details. Ensure the Google Sheet is public or the script is deployed to be accessible by 'Anyone'.`, 'error');
-                document.getElementById('houseGrid').innerHTML = `<div class="text-center p-8 text-red-500">${error.message}</div>`;
+                showMessage(`${labels[lang].error}: ${error.message}. Please check the console (F12) for more details.`, 'error');
+                document.getElementById('houseGrid').innerHTML = '';
             }
         }
 
@@ -250,8 +260,10 @@
             const maxPrice = allData.reduce((max, item) => {
                 const price = parseFloat(item.price);
                 return !isNaN(price) && price > max ? price : max;
-            }, maxPriceDefault);
-            maxPriceInput.value = maxPrice.toFixed(0);
+            }, 0);
+            const ceilingPrice = Math.ceil((maxPrice > 0 ? maxPrice : maxPriceDefault) / 10) * 10;
+            maxPriceInput.value = ceilingPrice;
+            maxPriceInput.max = ceilingPrice;
         }
 
         function filterData() {
@@ -262,34 +274,34 @@
             const maxPriceInput = document.getElementById('maxPrice');
             const maxPrice = maxPriceInput.value === '' || isNaN(parseFloat(maxPriceInput.value)) || parseFloat(maxPriceInput.value) < 0 ? Infinity : parseFloat(maxPriceInput.value);
 
-            filteredData = allData.filter(item => {
+            let monthlyAvailabilities = [];
+
+            const baseFilteredRooms = allData.filter(item => {
                 const balconyMatch = balcony === '' || item.balcony === balcony;
                 const windowMatch = windowVal === '' || item.window === windowVal;
                 const privatewcMatch = privatewc === '' || item.privatewc === privatewc;
-                const priceMatch = !item.price || isNaN(parseFloat(item.price)) || parseFloat(item.price) <= maxPrice;
-
-                let monthMatch;
-                if (month === '') {
-                    monthMatch = item.startMonth !== null;
-                } else {
-                    // Check if the room is available for all months from the selected month onward
-                    const startIndex = monthsInOrder.indexOf(month);
-                    if (startIndex === -1) return false; // Invalid month
-                    let isAvailableFromMonth = true;
-                    for (let i = startIndex; i < monthsInOrder.length; i++) {
-                        const m = monthsInOrder[i];
-                        if (!isAvailable(item.availability[m])) {
-                            isAvailableFromMonth = false;
-                            break;
-                        }
-                    }
-                    monthMatch = isAvailableFromMonth;
-                }
-
-                return balconyMatch && windowMatch && privatewcMatch && priceMatch && monthMatch;
+                const priceMatch = item.price === null || isNaN(parseFloat(item.price)) || parseFloat(item.price) <= maxPrice;
+                return balconyMatch && windowMatch && privatewcMatch && priceMatch;
             });
 
-            displayData(filteredData);
+            if (month === '') {
+                 monthlyAvailabilities = baseFilteredRooms.map(room => ({...room, displayMonth: 'Any'}));
+
+            } else {
+                const startIndex = academicMonths.indexOf(month);
+                if (startIndex !== -1) {
+                    for (let i = startIndex; i < academicMonths.length; i++) {
+                        const currentMonth = academicMonths[i];
+                        baseFilteredRooms.forEach(room => {
+                            if (isAvailable(room.availability[currentMonth])) {
+                                monthlyAvailabilities.push({ ...room, displayMonth: currentMonth });
+                            }
+                        });
+                    }
+                }
+            }
+            
+            displayData(monthlyAvailabilities);
         }
 
         function resetFilters() {
@@ -297,10 +309,8 @@
             document.getElementById('balcony').value = '';
             document.getElementById('window').value = '';
             document.getElementById('privatewc').value = '';
-            const maxPriceInput = document.getElementById('maxPrice');
-            maxPriceInput.value = parseFloat(maxPriceInput.getAttribute('value')).toFixed(0);
-            filteredData = [...allData];
-            displayData(filteredData);
+            updatePriceRange(); 
+            displayData(allData.map(room => ({...room, displayMonth: 'Any'})));
         }
 
         function displayData(dataToShow) {
@@ -312,7 +322,7 @@
             countElement.textContent = labels[lang].resultsFound.replace('{count}', count);
 
             if (count === 0) {
-                grid.innerHTML = `<div class="text-center p-8 text-gray-500">${labels[lang].noData}</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center p-8 text-gray-500">${labels[lang].noData}</div>`;
                 return;
             }
 
@@ -323,24 +333,27 @@
                 const price = item.price && !isNaN(parseFloat(item.price)) && parseFloat(item.price) > 0 
                     ? `€${parseFloat(item.price).toFixed(2)}` 
                     : 'N/A';
-                const privatewcDisplay = item.privatewc === 'SIM' ? labels[lang].yes :
-                                         item.privatewc === 'NÃO' ? labels[lang].no : 'N/A';
-                const balconyDisplay = item.balcony === 'SIM' ? labels[lang].yes :
-                                       item.balcony === 'NÃO' ? labels[lang].no : 'N/A';
-                const windowDisplay = item.window === 'SIM' ? labels[lang].yes :
-                                      item.window === 'NÃO' ? labels[lang].no : 'N/A';
+                const privatewcDisplay = item.privatewc === 'SIM' ? labels[lang].yes : labels[lang].no;
+                const balconyDisplay = item.balcony === 'SIM' ? labels[lang].yes : labels[lang].no;
+                const windowDisplay = item.window === 'SIM' ? labels[lang].yes : labels[lang].no;
+                
+                const availabilityRange = getAvailabilityRange(item.availability, lang);
+
                 const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-lg shadow-md';
+                card.className = 'bg-white p-4 rounded-lg shadow-md flex flex-col';
                 card.innerHTML = `
-                    <div class="flex flex-col gap-2">
-                        <div class="font-medium text-gray-900">${item.house || 'N/A'}</div>
+                    <div class="flex-grow">
+                        <div class="font-bold text-lg text-gray-900">${item.house || 'N/A'} - Room ${item.room || 'N/A'}</div>
                         <div class="text-sm text-gray-600">${item.address || 'N/A'}</div>
-                        <div class="text-sm">${labels[lang].room}${item.room || 'N/A'}</div>
-                        <div class="text-sm">${labels[lang].maxGuests}: ${item.maxGuests || 'N/A'}</div>
-                        <div class="text-sm">${labels[lang].balcony}: ${balconyDisplay}</div>
-                        <div class="text-sm">${labels[lang].window}: ${windowDisplay}</div>
-                        <div class="text-sm">${labels[lang].privatewc}: ${privatewcDisplay}</div>
-                        <div class="text-sm font-semibold text-green-600">${labels[lang].monthlyStatus}: ${price}</div>
+                         <div class="text-xs text-gray-500 mt-1">${labels[lang].fullAvailabilityLabel}: ${availabilityRange}</div>
+                        <hr class="my-2">
+                        <div class="text-sm"><span class="font-medium">${labels[lang].maxGuests}:</span> ${item.maxGuests || 'N/A'}</div>
+                        <div class="text-sm"><span class="font-medium">${labels[lang].balcony}:</span> ${balconyDisplay}</div>
+                        <div class="text-sm"><span class="font-medium">${labels[lang].window}:</span> ${windowDisplay}</div>
+                        <div class="text-sm"><span class="font-medium">${labels[lang].privatewc}:</span> ${privatewcDisplay}</div>
+                    </div>
+                    <div class="mt-2 pt-2 flex justify-between items-center border-t">
+                        <div class="text-lg font-semibold text-green-600">${price}</div>
                         <div class="text-sm">${photoCell}</div>
                     </div>
                 `;
@@ -348,11 +361,107 @@
             });
         }
 
+        // --- Gemini Feature Functions ---
+
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('geminiModal').classList.remove('hidden');
+            document.getElementById('geminiModal').classList.add('flex');
+        }
+
+        function hideModal() {
+            document.getElementById('geminiModal').classList.add('hidden');
+            document.getElementById('geminiModal').classList.remove('flex');
+        }
+
+        function showLoadingModal(title) {
+            const loadingSpinner = `
+                <div class="flex justify-center items-center h-48">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+                </div>
+            `;
+            showModal(title, loadingSpinner);
+        }
+
+        async function callGemini(prompt, retries = 3, delay = 1000) {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGemini(prompt, retries - 1, delay * 2);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    return candidate.content.parts[0].text;
+                } else {
+                    const safetyReason = candidate?.finishReason;
+                    if (safetyReason === 'SAFETY') {
+                        return "The response was blocked for safety reasons. Please adjust your request.";
+                    }
+                    throw new Error("Unexpected API response structure.");
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                return `An error occurred while contacting the AI model: ${error.message}.`;
+            }
+        }
+
+        async function getNeighborhoodInsights(address) {
+            if (!address) {
+                showModal("Error", "Address not available for this listing.");
+                return;
+            }
+            showLoadingModal("✨ Generating Neighborhood Insights...");
+            
+            const prompt = `Provide a brief, helpful summary for a prospective tenant about the neighborhood around "${address}" in Portugal. Focus on the atmosphere, typical amenities like cafes or markets, public transportation options, and the general vibe. Keep it concise (2-3 short paragraphs) and write in a friendly, encouraging tone.`;
+            
+            const result = await callGemini(prompt);
+            showModal("✨ Neighborhood Insights", result.replace(/\n/g, '<br>'));
+        }
+
+        async function draftInquiryEmail(item) {
+            if (!item || !item.house || !item.room) {
+                showModal("Error", "Room details not available for this listing.");
+                return;
+            }
+            showLoadingModal("✨ Drafting Inquiry Email...");
+
+            const priceText = item.price ? ` which I saw listed for €${item.price} per month` : '';
+            
+            const prompt = `Draft a polite and friendly email in both English and then Portuguese to inquire about renting a room. Address it to "Dear Landlord,". Mention interest in Room #${item.room} at ${item.house}${priceText}. Ask if it's available, about the viewing process, and next steps. Sign off as "A Prospective Tenant". Format the response clearly with headings for "English" and "Portuguese".`;
+            
+            const result = await callGemini(prompt);
+            const formattedResult = `<pre class="whitespace-pre-wrap font-sans text-sm">${result}</pre>`;
+            showModal("✨ Draft Inquiry Email", formattedResult);
+        }
+
+        // --- Core Application Functions ---
+
         function toggleLanguage(newLang) {
             lang = newLang;
             updateLanguageStyles();
             updateLabelsAndContent();
-            displayData(filteredData);
+            // Re-run the filter with the same criteria to update language on cards
+            filterData(); 
         }
 
         function updateLanguageStyles() {
@@ -366,6 +475,7 @@
 
         function updateLabelsAndContent() {
             const l = labels[lang];
+            document.title = l.mainTitle;
             document.getElementById('mainTitle').textContent = l.mainTitle;
             document.getElementById('monthLabel').textContent = l.monthLabel;
             document.getElementById('balconyLabel').textContent = l.balconyLabel;
@@ -383,15 +493,19 @@
             const balconySelect = document.getElementById('balcony');
             const windowSelect = document.getElementById('window');
             const privatewcSelect = document.getElementById('privatewc');
+            
             const currentMonth = monthSelect.value;
             const currentBalcony = balconySelect.value;
             const currentWindow = windowSelect.value;
             const currentPrivatewc = privatewcSelect.value;
             
             monthSelect.innerHTML = `<option value="">${l.any}</option>`;
-            Object.keys(l.months).forEach(key => {
-                monthSelect.innerHTML += `<option value="${key}">${l.months[key]}</option>`;
+            academicMonths.forEach(key => {
+                if (l.months[key]) {
+                    monthSelect.innerHTML += `<option value="${key}">${l.months[key]}</option>`;
+                }
             });
+
             balconySelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             windowSelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             privatewcSelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
@@ -406,21 +520,28 @@
             const messageArea = document.getElementById('messageArea');
             let bgColor, textColor;
             switch(type) {
-                case 'success': bgColor = 'bg-green-100'; textColor = 'text-green-800'; break;
-                case 'error': bgColor = 'bg-red-100'; textColor = 'text-red-800'; break;
-                default: bgColor = 'bg-blue-100'; textColor = 'text-blue-800'; break;
+                case 'error': 
+                    bgColor = 'bg-red-100'; 
+                    textColor = 'text-red-800'; 
+                    break;
+                default: 
+                    bgColor = 'bg-blue-100'; 
+                    textColor = 'text-blue-800'; 
+                    break;
             }
-            messageArea.innerHTML = `<div class="${bgColor} ${textColor} p-4 rounded-md font-medium">${message}</div>`;
+            messageArea.innerHTML = `<div class="${bgColor} ${textColor} p-4 rounded-md font-medium" role="alert">${message}</div>`;
         }
 
         function hideMessage() {
             document.getElementById('messageArea').innerHTML = '';
         }
 
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', function() {
             toggleLanguage('en');
             fetchData();
-        };
+        });
     </script>
 </body>
 </html>
+
+
