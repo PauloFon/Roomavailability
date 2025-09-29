@@ -171,18 +171,20 @@
             return isAvailableString || isAvailableNumber || isAvailableStringNumber;
         }
         
+        // --- UPDATED AVAILABILITY RANGE LOGIC ---
         function getAvailabilityRange(availability, lang) {
             let ranges = [];
             let currentStart = null;
 
-            for (const month of academicMonths) {
+            for (let i = 0; i < academicMonths.length; i++) {
+                const month = academicMonths[i];
                 if (isAvailable(availability[month])) {
                     if (currentStart === null) {
                         currentStart = month;
                     }
                 } else {
                     if (currentStart !== null) {
-                        const endMonth = academicMonths[academicMonths.indexOf(month) - 1];
+                        const endMonth = academicMonths[i - 1];
                         const startLabel = labels[lang].months[currentStart] || currentStart;
                         const endLabel = labels[lang].months[endMonth] || endMonth;
                         ranges.push(startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`);
@@ -190,6 +192,7 @@
                     }
                 }
             }
+            // After the loop, check if there is an open range that goes to the end of the year
             if (currentStart !== null) {
                  const startLabel = labels[lang].months[currentStart] || currentStart;
                  const endLabel = labels[lang].months[academicMonths[academicMonths.length-1]] || academicMonths[academicMonths.length-1];
