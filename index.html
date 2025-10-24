@@ -251,6 +251,9 @@
             maxPriceInput.max = ceilingPrice;
         }
 
+        // ===================================
+        // ===== MODIFIED FUNCTION START =====
+        // ===================================
         function filterData() {
             const balcony = document.getElementById('balcony').value;
             const windowVal = document.getElementById('window').value;
@@ -267,23 +270,19 @@
                 return balconyMatch && windowMatch && privatewcMatch && priceMatch;
             });
 
+            // If a month is selected, filter for rooms available in that specific month.
             if (month) {
-                const startIndex = academicMonths.indexOf(month);
-                if (startIndex !== -1) {
-                    filteredRooms = filteredRooms.filter(room => {
-                        for (let i = startIndex; i < academicMonths.length; i++) {
-                            const currentMonth = academicMonths[i];
-                            if (!isAvailable(room.availability[currentMonth])) {
-                                return false; 
-                            }
-                        }
-                        return true; 
-                    });
-                }
+                filteredRooms = filteredRooms.filter(room => {
+                    // This now checks ONLY the selected month, not all subsequent months.
+                    return isAvailable(room.availability[month]);
+                });
             }
             
             displayData(filteredRooms);
         }
+        // =================================
+        // ===== MODIFIED FUNCTION END =====
+        // =================================
 
         function resetFilters() {
             document.getElementById('month').value = '';
@@ -428,4 +427,3 @@
     </script>
 </body>
 </html>
-
