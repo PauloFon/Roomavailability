@@ -171,7 +171,6 @@
             return isAvailableString || isAvailableNumber || isAvailableStringNumber;
         }
         
-        // --- UPDATED AVAILABILITY RANGE LOGIC ---
         function getAvailabilityRange(availability, lang) {
             let ranges = [];
             let currentStart = null;
@@ -203,6 +202,7 @@
         }
 
         async function fetchData() {
+            // NOTE: This URL is external and cannot be modified or guaranteed to work.
             const url = 'https://script.google.com/macros/s/AKfycbwL2gJ0mzG7ch6SQzkwZUQ6chQb4kDQEupUEZR2L7iqQozrEkLEclEewqBXC-b25Yai_g/exec';
             showMessage(labels[lang].loading, 'loading');
             try {
@@ -251,38 +251,41 @@
             maxPriceInput.max = ceilingPrice;
         }
 
-        // ===================================
-        // ===== MODIFIED FUNCTION START =====
-        // ===================================
+        /**
+         * UPDATED FILTER LOGIC:
+         * 1. Check static filters (price, balcony, etc.).
+         * 2. If a month is selected, only show rooms that are available *in* that specific month.
+         * This prevents showing rooms that became available in a previous month (e.g., February)
+         * when the user has selected a later month (e.g., March).
+         */
         function filterData() {
             const balcony = document.getElementById('balcony').value;
             const windowVal = document.getElementById('window').value;
             const privatewc = document.getElementById('privatewc').value;
-            const month = document.getElementById('month').value;
+            const selectedMonthFilter = document.getElementById('month').value; 
             const maxPriceInput = document.getElementById('maxPrice');
             const maxPrice = maxPriceInput.value === '' || isNaN(parseFloat(maxPriceInput.value)) || parseFloat(maxPriceInput.value) < 0 ? Infinity : parseFloat(maxPriceInput.value);
 
             let filteredRooms = allData.filter(item => {
+                // Apply static filters
                 const balconyMatch = balcony === '' || item.balcony === balcony;
                 const windowMatch = windowVal === '' || item.window === windowVal;
                 const privatewcMatch = privatewc === '' || item.privatewc === privatewc;
                 const priceMatch = item.price === null || isNaN(parseFloat(item.price)) || parseFloat(item.price) <= maxPrice;
-                return balconyMatch && windowMatch && privatewcMatch && priceMatch;
+                
+                let availabilityMatch = true;
+                
+                if (selectedMonthFilter) {
+                    // Check if the room is available in the specific selected month.
+                    // This is the strict logic you requested.
+                    availabilityMatch = isAvailable(item.availability[selectedMonthFilter]);
+                }
+                
+                return balconyMatch && windowMatch && privatewcMatch && priceMatch && availabilityMatch;
             });
-
-            // If a month is selected, filter for rooms available in that specific month.
-            if (month) {
-                filteredRooms = filteredRooms.filter(room => {
-                    // This now checks ONLY the selected month, not all subsequent months.
-                    return isAvailable(room.availability[month]);
-                });
-            }
             
             displayData(filteredRooms);
         }
-        // =================================
-        // ===== MODIFIED FUNCTION END =====
-        // =================================
 
         function resetFilters() {
             document.getElementById('month').value = '';
@@ -345,6 +348,7 @@
             lang = newLang;
             updateLanguageStyles();
             updateLabelsAndContent();
+            // Re-filter data to show correct language labels on the displayed cards
             filterData(); 
         }
 
@@ -378,11 +382,13 @@
             const windowSelect = document.getElementById('window');
             const privatewcSelect = document.getElementById('privatewc');
             
+            // Preserve current selection across language change
             const currentMonth = monthSelect.value;
             const currentBalcony = balconySelect.value;
             const currentWindow = windowSelect.value;
             const currentPrivatewc = privatewcSelect.value;
             
+            // Populate Month Select
             monthSelect.innerHTML = `<option value="">${l.any}</option>`;
             academicMonths.forEach(key => {
                 if (l.months[key]) {
@@ -390,10 +396,12 @@
                 }
             });
 
+            // Populate Yes/No Selects
             balconySelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             windowSelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             privatewcSelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             
+            // Restore selections
             monthSelect.value = currentMonth;
             balconySelect.value = currentBalcony;
             windowSelect.value = currentWindow;
