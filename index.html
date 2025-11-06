@@ -252,11 +252,11 @@
         }
 
         /**
-         * UPDATED FILTER LOGIC:
-         * 1. Check static filters (price, balcony, etc.).
-         * 2. If a month is selected, only show rooms that are available *in* that specific month.
-         * This prevents showing rooms that became available in a previous month (e.g., February)
-         * when the user has selected a later month (e.g., March).
+         * UPDATED FILTER LOGIC: Strict "Available From"
+         * Filters rooms that are:
+         * 1. Available in the selected month OR ANY MONTH AFTER IT. (Condition A)
+         * 2. NOT available in the month immediately preceding the selected month (Condition B).
+         * * This ensures results are strictly "Available FROM" the month the user selects.
          */
         function filterData() {
             const balcony = document.getElementById('balcony').value;
@@ -276,9 +276,23 @@
                 let availabilityMatch = true;
                 
                 if (selectedMonthFilter) {
-                    // Check if the room is available in the specific selected month.
-                    // This is the strict logic you requested.
-                    availabilityMatch = isAvailable(item.availability[selectedMonthFilter]);
+                    const selectedIndex = academicMonths.indexOf(selectedMonthFilter);
+                    const previousMonthKey = (selectedIndex > 0) ? academicMonths[selectedIndex - 1] : null;
+                    
+                    // 1. Check if room is available in ANY month from the selected month onwards (Condition A)
+                    const futureMonths = academicMonths.slice(selectedIndex);
+                    const isAvailableFromSelectedMonth = futureMonths.some(monthKey => isAvailable(item.availability[monthKey]));
+
+                    // 2. Check if the room was available in the month *before* the selected month (Condition B)
+                    const wasAvailableLastMonth = previousMonthKey && isAvailable(item.availability[previousMonthKey]);
+
+                    if (selectedIndex === 0) {
+                        // If the first month ("SETEMBRO") is selected, we only need Condition A (it's available from now or later)
+                        availabilityMatch = isAvailableFromSelectedMonth;
+                    } else {
+                        // For any other month, it must meet Condition A AND Condition B must be false (was not available last month).
+                        availabilityMatch = isAvailableFromSelectedMonth && !wasAvailableLastMonth;
+                    }
                 }
                 
                 return balconyMatch && windowMatch && privatewcMatch && priceMatch && availabilityMatch;
@@ -348,7 +362,6 @@
             lang = newLang;
             updateLanguageStyles();
             updateLabelsAndContent();
-            // Re-filter data to show correct language labels on the displayed cards
             filterData(); 
         }
 
