@@ -88,21 +88,17 @@
                 </div>
             </div>
         </div>
-        
+       
         <div id="resultsCount" class="text-lg font-semibold mb-4 text-gray-700"></div>
-
         <div id="messageArea" class="my-4"></div>
         <div id="houseGrid" class="card-grid">
         </div>
     </div>
-
     <script>
         let allData = [];
         let lang = 'en';
         let maxPriceDefault = 1000;
-
         const academicMonths = ["SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO", "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO"];
-
         const labels = {
             en: {
                 mainTitle: "Room Availability",
@@ -163,18 +159,16 @@
                 fullAvailabilityLabel: "Disponibilidade Total"
             }
         };
-
         function isAvailable(monthValue) {
             const isAvailableString = monthValue === 'Livre';
             const isAvailableNumber = typeof monthValue === 'number' && monthValue > 0;
             const isAvailableStringNumber = typeof monthValue === 'string' && !isNaN(parseFloat(monthValue)) && parseFloat(monthValue) > 0;
             return isAvailableString || isAvailableNumber || isAvailableStringNumber;
         }
-        
+       
         function getAvailabilityRange(availability, lang) {
             let ranges = [];
             let currentStart = null;
-
             for (let i = 0; i < academicMonths.length; i++) {
                 const month = academicMonths[i];
                 if (isAvailable(availability[month])) {
@@ -191,18 +185,14 @@
                     }
                 }
             }
-            // After the loop, check if there is an open range that goes to the end of the year
             if (currentStart !== null) {
                  const startLabel = labels[lang].months[currentStart] || currentStart;
                  const endLabel = labels[lang].months[academicMonths[academicMonths.length-1]] || academicMonths[academicMonths.length-1];
                  ranges.push(startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`);
             }
-
             return ranges.length > 0 ? ranges.join(', ') : 'N/A';
         }
-
         async function fetchData() {
-            // NOTE: This URL is external and cannot be modified or guaranteed to work.
             const url = 'https://script.google.com/macros/s/AKfycbwL2gJ0mzG7ch6SQzkwZUQ6chQb4kDQEupUEZR2L7iqQozrEkLEclEewqBXC-b25Yai_g/exec';
             showMessage(labels[lang].loading, 'loading');
             try {
@@ -239,7 +229,6 @@
                 document.getElementById('houseGrid').innerHTML = '';
             }
         }
-
         function updatePriceRange() {
             const maxPriceInput = document.getElementById('maxPrice');
             const maxPrice = allData.reduce((max, item) => {
@@ -251,91 +240,65 @@
             maxPriceInput.max = ceilingPrice;
         }
 
-        /**
-         * UPDATED FILTER LOGIC: Strict "Available From"
-         * Filters rooms that are:
-         * 1. Available in the selected month OR ANY MONTH AFTER IT. (Condition A)
-         * 2. NOT available in the month immediately preceding the selected month (Condition B).
-         * * This ensures results are strictly "Available FROM" the month the user selects.
-         */
+        // FIXED FILTER LOGIC: Now simply checks if the room is available in at least one month from the selected month onward
         function filterData() {
             const balcony = document.getElementById('balcony').value;
             const windowVal = document.getElementById('window').value;
             const privatewc = document.getElementById('privatewc').value;
-            const selectedMonthFilter = document.getElementById('month').value; 
+            const selectedMonthFilter = document.getElementById('month').value;
             const maxPriceInput = document.getElementById('maxPrice');
             const maxPrice = maxPriceInput.value === '' || isNaN(parseFloat(maxPriceInput.value)) || parseFloat(maxPriceInput.value) < 0 ? Infinity : parseFloat(maxPriceInput.value);
-
             let filteredRooms = allData.filter(item => {
-                // Apply static filters
+                // Static filters
                 const balconyMatch = balcony === '' || item.balcony === balcony;
                 const windowMatch = windowVal === '' || item.window === windowVal;
                 const privatewcMatch = privatewc === '' || item.privatewc === privatewc;
                 const priceMatch = item.price === null || isNaN(parseFloat(item.price)) || parseFloat(item.price) <= maxPrice;
-                
+               
                 let availabilityMatch = true;
-                
+               
                 if (selectedMonthFilter) {
                     const selectedIndex = academicMonths.indexOf(selectedMonthFilter);
-                    const previousMonthKey = (selectedIndex > 0) ? academicMonths[selectedIndex - 1] : null;
-                    
-                    // 1. Check if room is available in ANY month from the selected month onwards (Condition A)
                     const futureMonths = academicMonths.slice(selectedIndex);
-                    const isAvailableFromSelectedMonth = futureMonths.some(monthKey => isAvailable(item.availability[monthKey]));
-
-                    // 2. Check if the room was available in the month *before* the selected month (Condition B)
-                    const wasAvailableLastMonth = previousMonthKey && isAvailable(item.availability[previousMonthKey]);
-
-                    if (selectedIndex === 0) {
-                        // If the first month ("SETEMBRO") is selected, we only need Condition A (it's available from now or later)
-                        availabilityMatch = isAvailableFromSelectedMonth;
-                    } else {
-                        // For any other month, it must meet Condition A AND Condition B must be false (was not available last month).
-                        availabilityMatch = isAvailableFromSelectedMonth && !wasAvailableLastMonth;
-                    }
+                    availabilityMatch = futureMonths.some(monthKey => isAvailable(item.availability[monthKey]));
                 }
-                
+               
                 return balconyMatch && windowMatch && privatewcMatch && priceMatch && availabilityMatch;
             });
-            
+           
             displayData(filteredRooms);
         }
-
         function resetFilters() {
             document.getElementById('month').value = '';
             document.getElementById('balcony').value = '';
             document.getElementById('window').value = '';
             document.getElementById('privatewc').value = '';
-            updatePriceRange(); 
+            updatePriceRange();
             displayData(allData);
         }
-
         function displayData(dataToShow) {
             const grid = document.getElementById('houseGrid');
             const countElement = document.getElementById('resultsCount');
             grid.innerHTML = '';
-            
+           
             const count = dataToShow ? dataToShow.length : 0;
             countElement.textContent = labels[lang].resultsFound.replace('{count}', count);
-
             if (count === 0) {
                 grid.innerHTML = `<div class="col-span-full text-center p-8 text-gray-500">${labels[lang].noData}</div>`;
                 return;
             }
-
             dataToShow.forEach(item => {
-                const photoCell = item.photo && item.photo.trim() !== '' 
-                    ? `<a href="${item.photo}" target="_blank" class="text-blue-600 hover:underline font-medium">${labels[lang].viewPhoto}</a>` 
+                const photoCell = item.photo && item.photo.trim() !== ''
+                    ? `<a href="${item.photo}" target="_blank" class="text-blue-600 hover:underline font-medium">${labels[lang].viewPhoto}</a>`
                     : labels[lang].no;
-                const price = item.price && !isNaN(parseFloat(item.price)) && parseFloat(item.price) > 0 
-                    ? `€${parseFloat(item.price).toFixed(2)}` 
+                const price = item.price && !isNaN(parseFloat(item.price)) && parseFloat(item.price) > 0
+                    ? `€${parseFloat(item.price).toFixed(2)}`
                     : 'N/A';
                 const privatewcDisplay = item.privatewc === 'SIM' ? labels[lang].yes : labels[lang].no;
                 const balconyDisplay = item.balcony === 'SIM' ? labels[lang].yes : labels[lang].no;
                 const windowDisplay = item.window === 'SIM' ? labels[lang].yes : labels[lang].no;
-                
+               
                 const availabilityRange = getAvailabilityRange(item.availability, lang);
-
                 const card = document.createElement('div');
                 card.className = 'bg-white p-4 rounded-lg shadow-md flex flex-col';
                 card.innerHTML = `
@@ -357,14 +320,12 @@
                 grid.appendChild(card);
             });
         }
-
         function toggleLanguage(newLang) {
             lang = newLang;
             updateLanguageStyles();
             updateLabelsAndContent();
-            filterData(); 
+            filterData();
         }
-
         function updateLanguageStyles() {
             const enBtn = document.getElementById('enBtn');
             const ptBtn = document.getElementById('ptBtn');
@@ -373,7 +334,6 @@
             enBtn.className = `px-3 py-1 text-sm font-medium rounded-md ${lang === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
             ptBtn.className = `px-3 py-1 text-sm font-medium rounded-md ${lang === 'pt' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
         }
-
         function updateLabelsAndContent() {
             const l = labels[lang];
             document.title = l.mainTitle;
@@ -387,60 +347,51 @@
             document.getElementById('resetBtn').textContent = l.resetBtn;
             populateSelects();
         }
-
         function populateSelects() {
             const l = labels[lang];
             const monthSelect = document.getElementById('month');
             const balconySelect = document.getElementById('balcony');
             const windowSelect = document.getElementById('window');
             const privatewcSelect = document.getElementById('privatewc');
-            
-            // Preserve current selection across language change
+           
             const currentMonth = monthSelect.value;
             const currentBalcony = balconySelect.value;
             const currentWindow = windowSelect.value;
             const currentPrivatewc = privatewcSelect.value;
-            
-            // Populate Month Select
+           
             monthSelect.innerHTML = `<option value="">${l.any}</option>`;
             academicMonths.forEach(key => {
                 if (l.months[key]) {
                     monthSelect.innerHTML += `<option value="${key}">${l.months[key]}</option>`;
                 }
             });
-
-            // Populate Yes/No Selects
             balconySelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             windowSelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
             privatewcSelect.innerHTML = `<option value="">${l.any}</option><option value="SIM">${l.yes}</option><option value="NÃO">${l.no}</option>`;
-            
-            // Restore selections
+           
             monthSelect.value = currentMonth;
             balconySelect.value = currentBalcony;
             windowSelect.value = currentWindow;
             privatewcSelect.value = currentPrivatewc;
         }
-
         function showMessage(message, type = 'info') {
             const messageArea = document.getElementById('messageArea');
             let bgColor, textColor;
             switch(type) {
-                case 'error': 
-                    bgColor = 'bg-red-100'; 
-                    textColor = 'text-red-800'; 
+                case 'error':
+                    bgColor = 'bg-red-100';
+                    textColor = 'text-red-800';
                     break;
-                default: 
-                    bgColor = 'bg-blue-100'; 
-                    textColor = 'text-blue-800'; 
+                default:
+                    bgColor = 'bg-blue-100';
+                    textColor = 'text-blue-800';
                     break;
             }
             messageArea.innerHTML = `<div class="${bgColor} ${textColor} p-4 rounded-md font-medium" role="alert">${message}</div>`;
         }
-
         function hideMessage() {
             document.getElementById('messageArea').innerHTML = '';
         }
-
         document.addEventListener('DOMContentLoaded', function() {
             toggleLanguage('en');
             fetchData();
